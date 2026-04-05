@@ -29,6 +29,17 @@ const { getSoldOut, markSoldOut, markAvailable, clearAllSoldOut } = require("./m
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
+// Auto-detect the public base URL (works on Render, Railway, local)
+function getBaseUrl(req) {
+  if (process.env.PUBLIC_URL && process.env.PUBLIC_URL.trim()) {
+    return process.env.PUBLIC_URL.trim().replace(/\/$/, "");
+  }
+  // On Render the host header is the real public domain
+  const proto = req ? (req.headers["x-forwarded-proto"] || req.protocol || "https") : "https";
+  const host  = req ? req.headers.host : `localhost:${PORT}`;
+  return `${proto}://${host}`;
+}
+
 // ─── Pre-flight: free the port before binding ─────────────────────────────
 // This runs synchronously so the port is guaranteed clear before listen()
 function freePort(port) {
@@ -126,7 +137,7 @@ app.get("/api/analytics", async (req, res) => {
 app.post("/api/qr", async (req, res) => {
   try {
     const { url } = req.body;
-    const qrDataURL = await generateQRCode(url || process.env.PUBLIC_URL || `http://localhost:${PORT}`);
+    const qrDataURL = await generateQRCode(url || getBaseUrl(req));
     res.json({ success: true, qr: qrDataURL });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -135,7 +146,7 @@ app.post("/api/qr", async (req, res) => {
 
 app.get("/api/qr", async (req, res) => {
   try {
-    const url = req.query.url || process.env.PUBLIC_URL || `http://localhost:${PORT}`;
+    const url = req.query.url || getBaseUrl(req);
     const qrDataURL = await generateQRCode(url);
     res.json({ success: true, qr: qrDataURL });
   } catch (err) {
@@ -157,7 +168,7 @@ app.delete("/api/admin/soldout",   (req, res) => { clearAllSoldOut(); res.json({
 // ─── Table-aware QR Code ─────────────────────────────────────────────────
 app.get("/api/qr/table/:num", async (req, res) => {
   try {
-    const base = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
+    const base = getBaseUrl(req);
     const url  = `${base}?table=${encodeURIComponent(req.params.num)}`;
     const qr   = await generateQRCode(url);
     res.json({ success:true, qr, table: req.params.num, url });
