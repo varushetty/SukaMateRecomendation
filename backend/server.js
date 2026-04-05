@@ -31,10 +31,16 @@ const PORT = parseInt(process.env.PORT || "3000", 10);
 
 // Auto-detect the public base URL (works on Render, Railway, local)
 function getBaseUrl(req) {
+  // 1. Manually set env var — highest priority
   if (process.env.PUBLIC_URL && process.env.PUBLIC_URL.trim()) {
     return process.env.PUBLIC_URL.trim().replace(/\/$/, "");
   }
-  // req.protocol correctly returns "https" on Render when trust proxy is enabled
+  // 2. RENDER_EXTERNAL_URL — automatically set by Render on every deployment
+  //    This is the most reliable way — no manual config needed
+  if (process.env.RENDER_EXTERNAL_URL && process.env.RENDER_EXTERNAL_URL.trim()) {
+    return process.env.RENDER_EXTERNAL_URL.trim().replace(/\/$/, "");
+  }
+  // 3. Fallback: read from request headers (works when trust proxy is on)
   const proto = req ? req.protocol : "http";
   const host  = req ? req.headers.host : `localhost:${PORT}`;
   return `${proto}://${host}`;
