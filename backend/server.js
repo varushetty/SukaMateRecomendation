@@ -34,8 +34,8 @@ function getBaseUrl(req) {
   if (process.env.PUBLIC_URL && process.env.PUBLIC_URL.trim()) {
     return process.env.PUBLIC_URL.trim().replace(/\/$/, "");
   }
-  // On Render the host header is the real public domain
-  const proto = req ? (req.headers["x-forwarded-proto"] || req.protocol || "https") : "https";
+  // req.protocol correctly returns "https" on Render when trust proxy is enabled
+  const proto = req ? req.protocol : "http";
   const host  = req ? req.headers.host : `localhost:${PORT}`;
   return `${proto}://${host}`;
 }
@@ -74,6 +74,7 @@ server.on("upgrade", (request, socket, head) => {
   });
 });
 
+app.set("trust proxy", true); // Required: makes req.protocol = "https" on Render
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
@@ -134,6 +135,16 @@ app.get("/api/analytics", async (req, res) => {
 });
 
 // ─── REST: QR Code ───────────────────────────────────────────────────────
+// Table-specific MUST come before generic /api/qr to avoid Express shadowing it
+app.get("/api/qr/table/:num", async (req, res) => {
+  try {
+    const base = getBaseUrl(req);
+    const url  = `${base}/?table=${encodeURIComponent(req.params.num)}`;
+    const qr   = await generateQRCode(url);
+    res.json({ success:true, qr, table: req.params.num, url });
+  } catch(e){ res.status(500).json({ success:false, error:e.message }); }
+});
+
 app.post("/api/qr", async (req, res) => {
   try {
     const { url } = req.body;
@@ -165,15 +176,6 @@ app.post("/api/admin/soldout",     (req, res) => { markSoldOut(req.body.name); r
 app.delete("/api/admin/soldout/:n",(req, res) => { markAvailable(decodeURIComponent(req.params.n)); res.json({ success:true, soldOut: getSoldOut() }); });
 app.delete("/api/admin/soldout",   (req, res) => { clearAllSoldOut(); res.json({ success:true, soldOut: [] }); });
 
-// ─── Table-aware QR Code ─────────────────────────────────────────────────
-app.get("/api/qr/table/:num", async (req, res) => {
-  try {
-    const base = getBaseUrl(req);
-    const url  = `${base}?table=${encodeURIComponent(req.params.num)}`;
-    const qr   = await generateQRCode(url);
-    res.json({ success:true, qr, table: req.params.num, url });
-  } catch(e){ res.status(500).json({ success:false, error:e.message }); }
-});
 
 // ─── WebSocket ────────────────────────────────────────────────────────────
 wss.on("connection", (ws) => {
