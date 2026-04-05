@@ -353,17 +353,26 @@ async function generateTableQRs() {
   const grid = document.getElementById('qrGrid');
   grid.innerHTML = '<p style="color:var(--muted);font-size:13px">Generating QR codes...</p>';
 
+  // window.location.origin is ALWAYS correct — "https://sukamate.onrender.com" on Render,
+  // "http://localhost:3000" locally. Never depends on server-side URL detection.
+  const base = window.location.origin;
+
   const cards = [];
   for (let t = from; t <= Math.min(to, from + 49); t++) {
     try {
-      const res = await fetch(`${API}/api/qr/table/${t}`);
-      const d   = await res.json();
+      const chatUrl = `${base}/?table=${t}`;
+      const res = await fetch(`${API}/api/qr`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: chatUrl })
+      });
+      const d = await res.json();
       if (d.qr) {
         cards.push(`<div class="qr-card">
           <img src="${d.qr}" alt="Table ${t}"/>
           <p>Table ${t}</p>
-          <button onclick="window.open('${d.url}','_blank')">Preview</button>
-          <button onclick="printQR('${d.qr}','${t}')" style="margin-top:4px">Print</button>
+          <button onclick="window.open('${chatUrl}','_blank')">Preview</button>
+          <button onclick="printQR('${d.qr}','${t}','${chatUrl}')" style="margin-top:4px">Print</button>
         </div>`);
       }
     } catch(e) {}
@@ -371,13 +380,14 @@ async function generateTableQRs() {
   grid.innerHTML = cards.length ? cards.join('') : '<p style="color:var(--muted);font-size:13px">Failed to generate. Is server running?</p>';
 }
 
-function printQR(dataUrl, tableNum) {
+function printQR(dataUrl, tableNum, chatUrl) {
   const w = window.open('', '_blank', 'width=400,height=500');
   w.document.write(`<html><head><title>Table ${tableNum} QR</title></head>
     <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;background:#fff">
     <h2 style="margin-bottom:12px;font-size:18px">Suka Brew — Table ${tableNum}</h2>
     <img src="${dataUrl}" style="width:250px;border-radius:8px"/>
     <p style="margin-top:12px;color:#666;font-size:13px">Scan to get personalised recommendations</p>
+    <p style="color:#aaa;font-size:10px;margin-top:4px">${chatUrl}</p>
     <script>setTimeout(()=>window.print(),400)<\/script>
     </body></html>`);
 }
