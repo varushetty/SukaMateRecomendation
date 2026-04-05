@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Suka Brew — Restaurant Dashboard</title>
+  <style>
+    :root{--primary:#397DFF;--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;
+    --text:#f0f0f5;--muted:#8890aa;--border:#2e3248;--green:#4ade80;--accent:#ff6b6b;--gold:#f59e0b;--r:12px}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* Layout */
+    .shell{display:flex;min-height:100vh}
+    .sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:20px 0;flex-shrink:0;position:fixed;height:100vh;overflow-y:auto}
+    .main{margin-left:220px;padding:28px;flex:1}
+
+    /* Sidebar */
+    .sb-logo{display:flex;align-items:center;gap:10px;padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px}
+    .sb-logo span{font-size:20px}
+    .sb-logo div h3{font-size:14px;font-weight:700}
+    .sb-logo div p{font-size:10px;color:var(--muted)}
+    .sb-nav a{display:flex;align-items:center;gap:9px;padding:10px 20px;font-size:13px;color:var(--muted);text-decoration:none;transition:.15s;cursor:pointer;border:none;background:none;width:100%}
+    .sb-nav a:hover,.sb-nav a.active{background:var(--surface2);color:var(--text)}
+    .sb-nav a .ic{font-size:16px;width:20px;text-align:center}
+    .sb-section{font-size:10px;color:var(--muted);padding:16px 20px 6px;text-transform:uppercase;letter-spacing:.08em}
+
+    /* Header */
+    .page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+    .page-hdr h1{font-size:20px;font-weight:600}
+    .page-hdr p{font-size:13px;color:var(--muted);margin-top:3px}
+
+    /* Cards */
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px}
+    .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+    .stat .lbl{font-size:11px;color:var(--muted);margin-bottom:6px}
+    .stat .val{font-size:26px;font-weight:700}
+    .stat .sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+    /* Sections */
+    .section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px}
+    .section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .section-hdr h2{font-size:15px;font-weight:600}
+
+    /* Tabs */
+    .tabs{display:flex;gap:2px;background:var(--surface2);border-radius:8px;padding:3px;margin-bottom:18px}
+    .tab{flex:1;padding:7px;font-size:12px;border:none;background:transparent;color:var(--muted);border-radius:6px;cursor:pointer;transition:.15s;text-align:center}
+    .tab.on{background:var(--surface);color:var(--text);font-weight:500}
+
+    /* Menu item list */
+    .menu-panel{display:none}.menu-panel.on{display:block}
+    .menu-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
+    .menu-item:last-child{border:none}
+    .item-info{flex:1}
+    .item-info .iname{font-size:13px;font-weight:500}
+    .item-info .iprice{font-size:12px;color:var(--muted)}
+    .sold-btn{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid;cursor:pointer;transition:.15s;white-space:nowrap;flex-shrink:0}
+    .sold-btn.avail{border-color:var(--accent);color:var(--accent);background:transparent}
+    .sold-btn.avail:hover{background:var(--accent);color:#fff}
+    .sold-btn.out{border-color:var(--green);color:var(--green);background:transparent}
+    .sold-btn.out:hover{background:var(--green);color:#000}
+    .sold-badge{background:#ff6b6b22;color:var(--accent);border-radius:10px;font-size:10px;padding:2px 7px;margin-left:7px;font-weight:500}
+
+    /* QR section */
+    .qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+    .qr-card{background:var(--surface2);border-radius:var(--r);padding:14px;text-align:center;border:1px solid var(--border)}
+    .qr-card img{width:90px;height:90px;border-radius:6px;background:#fff;padding:4px;margin-bottom:8px}
+    .qr-card p{font-size:12px;color:var(--muted);margin-bottom:8px}
+    .qr-card button{font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
+    .qr-card button:hover{border-color:var(--primary);color:var(--primary)}
+    .qr-range{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+    .qr-range input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px;width:70px;outline:none}
+    .qr-range button{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;cursor:pointer}
+
+    /* Buttons */
+    .btn{padding:7px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:.15s}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-danger{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+    .btn-danger:hover{background:var(--accent);color:#fff}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+    .btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
+
+    /* Feedback list */
+    .fb-row{padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .fb-row:last-child{border:none}
+    .fb-meta{font-size:11px;color:var(--muted);margin-bottom:3px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px}
+    .badge.yes{background:#4ade8022;color:var(--green)}
+    .badge.no{background:#ff6b6b22;color:var(--accent)}
+    .badge.maybe{background:#f59e0b22;color:var(--gold)}
+
+    /* Toast */
+    #toast{position:fixed;bottom:24px;right:24px;background:#22263a;border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;display:none;animation:fadeIn .2s ease;z-index:999}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+
+    /* API indicator */
+    .api-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+    .api-chip.live{background:#4ade8022;color:var(--green)}
+    .api-chip.offline{background:#f59e0b22;color:var(--gold)}
+    .api-dot{width:6px;height:6px;border-radius:50%}
+    .live .api-dot{background:var(--green);animation:pulse 2s infinite}
+    .offline .api-dot{background:var(--gold)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    @media(max-width:640px){.sidebar{width:60px}.sidebar .sb-logo div,.sidebar .sb-nav a span,.sidebar .sb-section{display:none}.main{margin-left:60px;padding:16px}}
+  </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <span>🍽️</span>
+      <div><h3>Suka Brew</h3><p>Restaurant Dashboard</p></div>
+    </div>
+    <div class="sb-section">Operations</div>
+    <div class="sb-nav">
+      <a class="active" onclick="showPage('overview')"><span class="ic">📊</span><span>Overview</span></a>
+      <a onclick="showPage('soldout')"><span class="ic">🔴</span><span>Sold Out</span></a>
+      <a onclick="showPage('qrcodes')"><span class="ic">📱</span><span>Table QR Codes</span></a>
+      <div class="sb-section">Analytics</div>
+      <a onclick="showPage('feedback')"><span class="ic">⭐</span><span>Customer Feedback</span></a>
+      <a href="/analytics.html" target="_blank"><span class="ic">📈</span><span>Charts</span></a>
+      <div class="sb-section">Links</div>
+      <a href="/" target="_blank"><span class="ic">💬</span><span>Open Chatbot</span></a>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Overview page -->
+    <div id="page-overview">
+      <div class="page-hdr">
+        <div><h1>Good evening, Suka Brew!</h1><p id="dateStr">Loading...</p></div>
+        <div id="apiStatus"></div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat"><div class="lbl">Today's Sessions</div><div class="val" id="s-sessions">—</div><div class="sub">customer chats</div></div>
+        <div class="stat"><div class="lbl">Feedback Received</div><div class="val" id="s-feedback">—</div><div class="sub">responses</div></div>
+        <div class="stat"><div class="lbl">Would Recommend</div><div class="val" id="s-rec" style="color:var(--green)">—</div><div class="sub">of respondents</div></div>
+        <div class="stat"><div class="lbl">Sold Out Items</div><div class="val" id="s-soldout" style="color:var(--accent)">—</div><div class="sub"><a onclick="showPage('soldout')" style="color:var(--primary);cursor:pointer;font-size:11px">manage →</a></div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-hdr">
+          <h2>Quick Actions</h2>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-danger" onclick="clearAllSoldOut()">🟢 Reset All Sold-Out</button>
+          <button class="btn btn-ghost" onclick="showPage('qrcodes')">📱 Generate QR Codes</button>
+          <button class="btn btn-ghost" onclick="window.open('/analytics.html','_blank')">📈 Full Analytics</button>
+          <button class="btn btn-ghost" onclick="window.open('/','_blank')">💬 Preview Chatbot</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-hdr"><h2>Recent Feedback</h2></div>
+        <div id="recentFb"><p style="color:var(--muted);font-size:13px">Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- Sold Out page -->
+    <div id="page-soldout" style="display:none">
+      <div class="page-hdr">
+        <div><h1>Sold Out Items</h1><p>Mark items unavailable so the AI won't recommend them</p></div>
+        <button class="btn btn-danger" onclick="clearAllSoldOut()">🟢 Clear All (End of Night)</button>
+      </div>
+
+      <div class="section">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">
+          Tap <strong style="color:var(--accent)">Mark Sold Out</strong> when a dish runs out. The AI stops recommending it instantly.
+          Tap <strong style="color:var(--green)">Available</strong> to bring it back.
+        </div>
+        <div class="tabs" id="menuTabs"></div>
+        <div id="menuPanels"></div>
+      </div>
+    </div>
+
+    <!-- QR Codes page -->
+    <div id="page-qrcodes" style="display:none">
+      <div class="page-hdr">
+        <div><h1>Table QR Codes</h1><p>Each QR code links directly to the chatbot with the table number pre-set</p></div>
+      </div>
+      <div class="section">
+        <div class="qr-range">
+          <span style="font-size:13px;color:var(--muted)">Generate for tables</span>
+          <input id="qrFrom" type="number" value="1" min="1"/>
+          <span style="font-size:13px;color:var(--muted)">to</span>
+          <input id="qrTo" type="number" value="20" min="1"/>
+          <button class="btn btn-primary" onclick="generateTableQRs()">Generate</button>
+        </div>
+        <div id="qrGrid" class="qr-grid"><p style="color:var(--muted);font-size:13px">Click Generate to create QR codes for your tables.</p></div>
+      </div>
+    </div>
+
+    <!-- Feedback page -->
+    <div id="page-feedback" style="display:none">
+      <div class="page-hdr">
+        <div><h1>Customer Feedback</h1><p>All collected feedback from chatbot sessions</p></div>
+        <button class="btn btn-ghost" onclick="loadFeedback()">↻ Refresh</button>
+      </div>
+      <div class="section">
+        <div id="allFeedback"><p style="color:var(--muted);font-size:13px">Loading...</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+let currentPage = 'overview';
+let soldOutSet = new Set();
+
+// Full menu for sold-out management
+const MENU_CATEGORIES = {
+  'Starters (Veg)': ['Cheesy Nachos','Garlic Butter Mushrooms','Malai Magic Broccoli','Classic Chilli Mushrooms','Podi Corn Masala','Mix Poppadom Basket'],
+  'Starters (Non-Veg)': ['Egg Manchurian','Kundapura Chicken 65','Kori Kempu Bezule'],
+  'Seafood': ["Shetty's Prawns Ghee Roast","Hebri Prawn Pepper Dry","Golden Fish Fingers","Grilled Salmon","Grilled Shrimp Skewers","Prawn Biryani"],
+  'Soups': ['Cream of Mushroom Soup','Roasted Tomato & Basil Soup','Curry Leaf Rasam','Tom Yum Chicken','Chicken Clear Soup','Sweet Corn Chicken Soup','Mutton Paya Soup'],
+  'Pizza & Burgers': ['Fiery BBQ Chicken Pizza','Chicken Tikka Pizza','Chicken Topkapi Burger','Classic Veg Burger'],
+  'Mains & Biryani': ['Chicken Alfredo Pasta','Spaghetti Bolognese','Creamy Mushroom Pasta','Lemon Spaghetti','Chicken Steak','Grilled Fish Steak','Veg Dum Biryani','Chicken Biryani','Mutton Biryani'],
+  'Indian Curry': ['Dal Makhani','Paneer Butter Masala','Shahi Korma','Butter Chicken','Mutton Rogan Josh','Thai Green Curry (Veg)','Thai Red Curry (Chicken)','Korean Fried Chicken Bowl'],
+  'BBQ & Grill': ['BBQ Chicken Wings','Grilled Chicken Steak','Lamb Kofta Kebab Platter'],
+  'Desserts': ['New York Cheesecake','Matcha Panna Cotta','Gulab Jamun Cheesecake','Raspberry Rasmalai Tart','Biscoff Tres Leches','Milk Mawa Samosa','Chocolate Lava Cake'],
+  'Drinks': ['Classic Mojito','LIIT (Long Island Iced Tea)','Margarita','Clover Club Cocktail','Blue Lagoon Cocktail','Espresso Martini','Virgin Mojito','Fruit Punch','Watermelon Cooler','Pineapple Ginger Juice','Frozen Iced Tea Slush','Classic Cold Coffee','Chilled Green Tea','Belgian Wit','IPA','Stout','Red Wine (Glass)','White Wine (Glass)','Rosé (Glass)'],
+};
+
+const PRICES = {'Cheesy Nachos':329,'Garlic Butter Mushrooms':399,'Malai Magic Broccoli':359,'Classic Chilli Mushrooms':319,'Podi Corn Masala':199,'Mix Poppadom Basket':199,'Egg Manchurian':229,'Kundapura Chicken 65':249,'Kori Kempu Bezule':249,"Shetty's Prawns Ghee Roast":489,'Hebri Prawn Pepper Dry':449,'Golden Fish Fingers':449,'Cream of Mushroom Soup':249,'Roasted Tomato & Basil Soup':249,'Curry Leaf Rasam':249,'Tom Yum Chicken':299,'Chicken Clear Soup':299,'Sweet Corn Chicken Soup':299,'Mutton Paya Soup':349,'Fiery BBQ Chicken Pizza':489,'Chicken Tikka Pizza':489,'Chicken Topkapi Burger':369,'Classic Veg Burger':339,'Chicken Alfredo Pasta':420,'Spaghetti Bolognese':450,'Creamy Mushroom Pasta':380,'Lemon Spaghetti':360,'Grilled Fish Steak':520,'Chicken Steak':499,'Veg Dum Biryani':349,'Chicken Biryani':399,'Mutton Biryani':449,'Prawn Biryani':479,'Dal Makhani':299,'Paneer Butter Masala':349,'Shahi Korma':379,'Butter Chicken':399,'Mutton Rogan Josh':449,'Thai Green Curry (Veg)':349,'Thai Red Curry (Chicken)':399,'Korean Fried Chicken Bowl':429,'BBQ Chicken Wings':399,'Grilled Chicken Steak':499,'Lamb Kofta Kebab Platter':529,'Grilled Salmon':599,'Grilled Shrimp Skewers':549,'New York Cheesecake':349,'Matcha Panna Cotta':249,'Gulab Jamun Cheesecake':349,'Raspberry Rasmalai Tart':359,'Biscoff Tres Leches':359,'Milk Mawa Samosa':329,'Chocolate Lava Cake':299,'Classic Mojito':350,'LIIT (Long Island Iced Tea)':450,'Margarita':380,'Clover Club Cocktail':420,'Blue Lagoon Cocktail':380,'Espresso Martini':450,'Virgin Mojito':199,'Fruit Punch':179,'Watermelon Cooler':189,'Pineapple Ginger Juice':199,'Frozen Iced Tea Slush':219,'Classic Cold Coffee':179,'Chilled Green Tea':149,'Belgian Wit':299,'IPA':299,'Stout':299,'Red Wine (Glass)':399,'White Wine (Glass)':349,'Rosé (Glass)':349};
+
+// ── Navigation ────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('[id^="page-"]').forEach(el => el.style.display = 'none');
+  document.querySelector(`#page-${name}`).style.display = '';
+  document.querySelectorAll('.sb-nav a').forEach(a => a.classList.remove('active'));
+  currentPage = name;
+  if (name === 'overview') loadOverview();
+  if (name === 'soldout') buildMenuTabs();
+  if (name === 'feedback') loadFeedback();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function toast(msg, ms = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', ms);
+}
+
+// ── Date ──────────────────────────────────────────────────────────────────
+document.getElementById('dateStr').textContent = new Date().toLocaleDateString('en-IN', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// ── API Status ────────────────────────────────────────────────────────────
+async function checkApiStatus() {
+  try {
+    const res = await fetch(`${API}/api/chat`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sessionId:'admin-check',message:'ping'})
+    });
+    const d = await res.json();
+    const isAI = d.reply && d.reply.length > 10;
+    const el = document.getElementById('apiStatus');
+    el.innerHTML = `<div class="api-chip ${isAI?'live':'offline'}"><div class="api-dot"></div>${isAI ? 'AI Active (Claude)' : 'Offline Mode'}</div>`;
+  } catch(e) {}
+}
+checkApiStatus();
+
+// ── Sold-Out API ──────────────────────────────────────────────────────────
+async function loadSoldOut() {
+  const res = await fetch(`${API}/api/admin/soldout`);
+  const d = await res.json();
+  soldOutSet = new Set(d.soldOut || []);
+  document.getElementById('s-soldout').textContent = soldOutSet.size;
+  return soldOutSet;
+}
+
+async function toggleSoldOut(name, btn) {
+  if (soldOutSet.has(name)) {
+    await fetch(`${API}/api/admin/soldout/${encodeURIComponent(name)}`, {method:'DELETE'});
+    soldOutSet.delete(name);
+    btn.className = 'sold-btn avail'; btn.textContent = 'Mark Sold Out';
+    const badge = document.querySelector(`[data-badge="${name}"]`);
+    if (badge) badge.remove();
+    toast(`✅ ${name} is available again`);
+  } else {
+    await fetch(`${API}/api/admin/soldout`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+    soldOutSet.add(name);
+    btn.className = 'sold-btn out'; btn.textContent = 'Mark Available';
+    toast(`🔴 ${name} marked sold out`);
+  }
+  document.getElementById('s-soldout').textContent = soldOutSet.size;
+}
+
+async function clearAllSoldOut() {
+  if (!confirm('Clear all sold-out items? (Use this at end of night or start of new day)')) return;
+  await fetch(`${API}/api/admin/soldout`, {method:'DELETE'});
+  soldOutSet.clear();
+  document.getElementById('s-soldout').textContent = 0;
+  toast('🟢 All items marked available!');
+  buildMenuTabs();
+}
+
+// ── Build sold-out tabs ───────────────────────────────────────────────────
+async function buildMenuTabs() {
+  await loadSoldOut();
+  const tabsEl = document.getElementById('menuTabs');
+  const panelsEl = document.getElementById('menuPanels');
+  tabsEl.innerHTML = ''; panelsEl.innerHTML = '';
+
+  const cats = Object.keys(MENU_CATEGORIES);
+  cats.forEach((cat, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'tab' + (i===0?' on':'');
+    tab.textContent = cat.split('(')[0].trim();
+    tab.onclick = () => {
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+      document.querySelectorAll('.menu-panel').forEach(p=>p.classList.remove('on'));
+      tab.classList.add('on');
+      document.getElementById(`panel-${i}`).classList.add('on');
+    };
+    tabsEl.appendChild(tab);
+
+    const panel = document.createElement('div');
+    panel.className = 'menu-panel' + (i===0?' on':'');
+    panel.id = `panel-${i}`;
+
+    MENU_CATEGORIES[cat].forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'menu-item';
+      const isSold = soldOutSet.has(item);
+      row.innerHTML = `
+        <div class="item-info">
+          <div class="iname">${item}${isSold?`<span class="sold-badge" data-badge="${item}">SOLD OUT</span>`:''}</div>
+          <div class="iprice">₹${PRICES[item]||'—'}</div>
+        </div>
+        <button class="sold-btn ${isSold?'out':'avail'}" onclick="toggleSoldOut('${item.replace(/'/g,"\\'")}',this)">
+          ${isSold?'Mark Available':'Mark Sold Out'}
+        </button>`;
+      panel.appendChild(row);
+    });
+    panelsEl.appendChild(panel);
+  });
+}
+
+// ── QR Code generation ────────────────────────────────────────────────────
+async function generateTableQRs() {
+  const from = parseInt(document.getElementById('qrFrom').value) || 1;
+  const to   = parseInt(document.getElementById('qrTo').value) || 20;
+  const grid = document.getElementById('qrGrid');
+  grid.innerHTML = '<p style="color:var(--muted);font-size:13px">Generating QR codes...</p>';
+
+  const cards = [];
+  for (let t = from; t <= Math.min(to, from + 49); t++) {
+    try {
+      const res = await fetch(`${API}/api/qr/table/${t}`);
+      const d   = await res.json();
+      if (d.qr) {
+        cards.push(`<div class="qr-card">
+          <img src="${d.qr}" alt="Table ${t}"/>
+          <p>Table ${t}</p>
+          <button onclick="window.open('${d.url}','_blank')">Preview</button>
+          <button onclick="printQR('${d.qr}','${t}')" style="margin-top:4px">Print</button>
+        </div>`);
+      }
+    } catch(e) {}
+  }
+  grid.innerHTML = cards.length ? cards.join('') : '<p style="color:var(--muted);font-size:13px">Failed to generate. Is server running?</p>';
+}
+
+function printQR(dataUrl, tableNum) {
+  const w = window.open('', '_blank', 'width=400,height=500');
+  w.document.write(`<html><head><title>Table ${tableNum} QR</title></head>
+    <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;background:#fff">
+    <h2 style="margin-bottom:12px;font-size:18px">Suka Brew — Table ${tableNum}</h2>
+    <img src="${dataUrl}" style="width:250px;border-radius:8px"/>
+    <p style="margin-top:12px;color:#666;font-size:13px">Scan to get personalised recommendations</p>
+    <script>setTimeout(()=>window.print(),400)<\/script>
+    </body></html>`);
+}
+
+// ── Overview load ─────────────────────────────────────────────────────────
+async function loadOverview() {
+  await loadSoldOut();
+  try {
+    const res = await fetch(`${API}/api/analytics`);
+    const d = await res.json();
+    if (d.success) {
+      const s = d.stats;
+      document.getElementById('s-sessions').textContent = s.total || 0;
+      document.getElementById('s-feedback').textContent = s.total || 0;
+      document.getElementById('s-rec').textContent = s.total ? s.wouldRecommend.pct + '%' : '—';
+      renderRecentFb(s.recentFeedback || []);
+    }
+  } catch(e) {}
+}
+
+function renderRecentFb(items) {
+  const el = document.getElementById('recentFb');
+  if (!items.length) { el.innerHTML = '<p style="color:var(--muted);font-size:13px">No feedback yet today.</p>'; return; }
+  el.innerHTML = items.slice(0,5).map(f => `
+    <div class="fb-row">
+      <div class="fb-meta">${new Date(f.timestamp).toLocaleString('en-IN')} · Session ${f.id.slice(0,8)}</div>
+      <span class="badge ${f.wouldRecommend?'yes':'no'}">${f.wouldRecommend?'Would recommend':'Wouldn\'t recommend'}</span>
+      ${f.comments ? `<span style="font-size:12px;color:var(--muted)">"${f.comments}"</span>` : ''}
+    </div>`).join('');
+}
+
+// ── Feedback page ─────────────────────────────────────────────────────────
+async function loadFeedback() {
+  const el = document.getElementById('allFeedback');
+  try {
+    const res = await fetch(`${API}/api/analytics`);
+    const d = await res.json();
+    if (!d.success || !d.stats.recentFeedback.length) {
+      el.innerHTML = '<p style="color:var(--muted);font-size:13px">No feedback collected yet.</p>'; return;
+    }
+    el.innerHTML = d.stats.recentFeedback.map(f => `
+      <div class="fb-row">
+        <div class="fb-meta">${new Date(f.timestamp).toLocaleString('en-IN')} · ${f.id}</div>
+        <span class="badge ${f.wouldRecommend?'yes':'no'}">${f.wouldRecommend?'✅ Recommends':'❌ Wouldn\'t recommend'}</span>
+        ${f.comments ? `<p style="margin-top:5px;font-size:13px">"${f.comments}"</p>` : ''}
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:13px">Could not load feedback. Is server running?</p>';
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadOverview();
+setInterval(loadOverview, 60000); // refresh every minute
+</script>
+</body>
+</html>

@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SukaMate — Suka Brew</title>
+  <style>
+    :root {
+      --primary:#397DFF; --primary-dark:#2a5fcc;
+      --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a;
+      --text:#f0f0f5; --muted:#8890aa; --border:#2e3248;
+      --green:#4ade80; --accent:#ff6b6b; --gold:#f59e0b;
+      --r:18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center}
+
+    /* Header */
+    .hdr{width:100%;max-width:480px;display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
+    .logo{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#7b5ea7);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+    .hi h2{font-size:14px;font-weight:700}
+    .hi p{font-size:11px;color:var(--muted)}
+    .sdot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;margin-right:4px;animation:p 2s infinite}
+    @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+    .hbtns{margin-left:auto;display:flex;gap:5px;align-items:center}
+    .hb{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:.18s}
+    .hb:hover{border-color:var(--primary);color:var(--primary)}
+    #ttsBtn{font-size:17px;cursor:pointer;user-select:none}
+
+    /* Chat */
+    .chat{width:100%;max-width:480px;flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--surface)}
+    #msgs{flex:1;overflow-y:auto;padding:16px 13px;display:flex;flex-direction:column;gap:11px;scroll-behavior:smooth}
+    #msgs::-webkit-scrollbar{width:3px}
+    #msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+    /* Bubbles */
+    .row{display:flex;align-items:flex-end;gap:6px;animation:fu .22s ease;max-width:94%}
+    @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+    .row.u{align-self:flex-end;flex-direction:row-reverse}
+    .row.b{align-self:flex-start}
+    .bic{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#7b5ea7);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+    .bbl{padding:10px 14px;border-radius:var(--r);font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+    .row.u .bbl{background:var(--primary);color:#fff;border-bottom-right-radius:4px}
+    .row.b .bbl{background:var(--surface2);color:var(--text);border-bottom-left-radius:4px;border:1px solid var(--border)}
+
+    /* Typing */
+    .typ .bbl{display:flex;gap:4px;align-items:center;padding:13px 16px}
+    .td{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bo .8s infinite}
+    .td:nth-child(2){animation-delay:.15s}.td:nth-child(3){animation-delay:.3s}
+    @keyframes bo{0%,80%,100%{transform:scale(.8)}40%{transform:scale(1.2)}}
+
+    /* Choice chips */
+    .chips{display:flex;flex-wrap:wrap;gap:7px;padding:2px 0 10px 30px;max-width:480px;width:100%}
+    .chip{background:transparent;border:1.5px solid var(--primary);color:var(--primary);border-radius:20px;padding:6px 14px;font-size:13px;cursor:pointer;transition:.18s;white-space:nowrap}
+    .chip:hover,.chip.sel{background:var(--primary);color:#fff}
+    .chip:disabled{opacity:.35;pointer-events:none}
+    /* multi-select chip style */
+    .chip.multi.picked{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .chip.multi{border-color:var(--gold);color:var(--gold)}
+    .chip.multi:hover{background:var(--gold);color:#000}
+    .chip.multi.picked{background:var(--gold);color:#000;border-color:var(--gold)}
+    /* Confirm button */
+    .confirm-btn{background:var(--green);color:#000;border:none;border-radius:20px;padding:7px 18px;font-size:13px;cursor:pointer;font-weight:700;margin-top:4px}
+
+    /* Progress bar */
+    .prog-wrap{width:100%;max-width:480px;height:3px;background:var(--border)}
+    .prog-bar{height:3px;background:linear-gradient(90deg,var(--primary),#7b5ea7);transition:width .5s ease}
+
+    /* Input */
+    .ibar{padding:9px 11px;background:var(--surface2);border-top:1px solid var(--border);display:flex;gap:7px;align-items:center;width:100%;max-width:480px}
+    #inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:22px;padding:8px 14px;color:var(--text);font-size:14px;outline:none;transition:.2s}
+    #inp:focus{border-color:var(--primary)}
+    #inp::placeholder{color:var(--muted)}
+    .ab{width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.18s}
+    #sndBtn{background:var(--primary);color:#fff}
+    #sndBtn:hover{background:var(--primary-dark)}
+    #micBtn{background:var(--surface);border:1px solid var(--border);color:var(--muted)}
+    #micBtn.on{background:var(--accent);border-color:var(--accent);color:#fff;animation:mp 1s infinite}
+    @keyframes mp{0%,100%{box-shadow:0 0 0 0 rgba(255,107,107,.4)}50%{box-shadow:0 0 0 8px rgba(255,107,107,0)}}
+
+    /* Voice overlay */
+    #vov{display:none;position:fixed;inset:0;background:rgba(10,10,20,.9);backdrop-filter:blur(10px);z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+    #vov.show{display:flex}
+    .vring{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#7b5ea7);display:flex;align-items:center;justify-content:center;font-size:42px;animation:rp 1.4s ease-in-out infinite}
+    @keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(57,125,255,.5)}50%{box-shadow:0 0 0 26px rgba(57,125,255,0)}}
+    #vlive{color:var(--muted);font-size:13px;max-width:280px;text-align:center;font-style:italic;min-height:16px}
+    #vstop{background:var(--accent);color:#fff;border:none;border-radius:20px;padding:8px 24px;font-size:14px;cursor:pointer}
+
+    /* Feedback */
+    #fbm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center}
+    #fbm.show{display:flex}
+    .mbox{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;width:92%;max-width:360px}
+    .mbox h3{font-size:16px;margin-bottom:12px}
+    .fbq{margin-bottom:12px}
+    .fbq label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+    .bg{display:flex;gap:6px}
+    .fb{flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:12px;transition:.18s}
+    .fb.sel{background:var(--primary);border-color:var(--primary)}
+    #fbc{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:8px;font-size:13px;outline:none;resize:none;margin-top:3px}
+    #fbsub{width:100%;margin-top:12px;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:11px;font-size:14px;cursor:pointer;font-weight:600}
+
+    @media(max-width:500px){.hdr,.chat,.ibar,.chips,.prog-wrap{max-width:100%}}
+  </style>
+</head>
+<body>
+
+<!-- Voice overlay -->
+<div id="vov">
+  <div class="vring">🎤</div>
+  <div style="color:var(--text);font-size:15px;opacity:.85">Listening… speak now</div>
+  <div id="vlive"></div>
+  <div style="color:var(--text);font-size:15px;opacity:.85;display:none" id="vtip">Tip: You can also type your message!</div>
+  <button id="vstop" onclick="stopMic()">Stop</button>
+</div>
+
+<!-- Feedback modal -->
+<div id="fbm">
+  <div class="mbox">
+    <h3>⭐ Rate Your Experience</h3>
+    <div class="fbq">
+      <label>Liked the suggestions?</label>
+      <div class="bg">
+        <button class="fb" data-q="liked" data-v="yes" onclick="pfb(this)">👍 Yes</button>
+        <button class="fb" data-q="liked" data-v="no"  onclick="pfb(this)">👎 No</button>
+      </div>
+    </div>
+    <div class="fbq">
+      <label>Enjoyed the recommendation?</label>
+      <div class="bg">
+        <button class="fb" data-q="enjoyed" data-v="yes" onclick="pfb(this)">Loved it!</button>
+        <button class="fb" data-q="enjoyed" data-v="no"  onclick="pfb(this)">Not really</button>
+      </div>
+    </div>
+    <div class="fbq">
+      <label>Would you recommend Suka Brew?</label>
+      <div class="bg">
+        <button class="fb" data-q="rec" data-v="yes"   onclick="pfb(this)">Definitely!</button>
+        <button class="fb" data-q="rec" data-v="maybe" onclick="pfb(this)">Maybe</button>
+        <button class="fb" data-q="rec" data-v="no"    onclick="pfb(this)">No</button>
+      </div>
+    </div>
+    <div class="fbq">
+      <label>Comments (optional)</label>
+      <textarea id="fbc" rows="2" placeholder="Any thoughts?"></textarea>
+    </div>
+    <button id="fbsub" onclick="subFb()">Submit Feedback 🙏</button>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="logo">🍽️</div>
+  <div class="hi"><h2>SukaMate</h2><p><span class="sdot"></span>Suka Brew · Mallathalli<span id="tblBadge" style="display:none;margin-left:6px;background:#397DFF20;color:var(--primary);border-radius:10px;padding:1px 8px;font-size:10px;font-weight:600"></span></p></div>
+  <div class="hbtns">
+    <span id="ttsBtn" title="Toggle voice" onclick="toggleTTS()">🔊</span>
+    <button class="hb" onclick="openFb()" title="Feedback">⭐</button>
+    <button class="hb" onclick="window.open('/analytics.html','_blank')" title="Analytics">📊</button>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div class="prog-wrap"><div class="prog-bar" id="prog" style="width:0%"></div></div>
+
+<!-- Chat -->
+<div class="chat"><div id="msgs"></div></div>
+
+<!-- Input -->
+<div class="ibar">
+  <button id="micBtn" class="ab" onclick="toggleMic()">🎤</button>
+  <input id="inp" type="text" placeholder="Type or tap mic to speak…" autocomplete="off"/>
+  <button id="sndBtn" class="ab" onclick="userSend()">➤</button>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SUKABREW CONVERSATION ENGINE v3
+   - Multi-cuisine selection (pick multiple)
+   - Separate drinks + food questions
+   - Smart follow-up if info not enough
+   - Every bot message spoken aloud (free Web Speech API)
+═══════════════════════════════════════════════════════════ */
+
+const API = window.location.origin;
+const SID = 'sb_' + Math.random().toString(36).slice(2);
+let ttsOn = true, recog = null;
+let fb = {};
+let pendingWelcomeSpeech = null; // speak welcome on first user gesture (browser autoplay policy)
+
+/*
+ ── Customer profile (built up over conversation) ─────────
+*/
+let P = {
+  dietType: null,       // 'veg' | 'nonveg' | 'both' | 'seafood'
+  cuisines: [],         // ['indian','asian','continental','italian','fusion'] (multi-select)
+  spice: null,          // 'mild' | 'medium' | 'spicy'
+  budget: null,         // '300-500' | '500-800' | '800-1200' | '1200+'
+  wantsDrink: null,     // true | false
+  drinkType: null,      // 'alcohol' | 'nonalcohol'
+  drinkStyle: null,     // 'beer'|'wine'|'cocktail'|'mocktail'|'juice'|'coffee'
+  occasion: null,       // 'solo'|'date'|'friends'|'family'
+  allergies: null,      // free text
+};
+
+// Flow steps
+const STEP = {
+  WELCOME:'welcome', OCCASION:'occasion', DIET:'diet',
+  CUISINE:'cuisine', SPICE:'spice', BUDGET:'budget',
+  DRINK_YN:'drink_yn', DRINK_TYPE:'drink_type', DRINK_STYLE:'drink_style',
+  ALLERGY:'allergy', RECOMMEND:'recommend',
+  POST_REC:'post_rec', EXPLORE:'explore',
+  FB1:'fb1', FB2:'fb2', FB3:'fb3', DONE:'done',
+};
+let step = STEP.WELCOME;
+
+// Progress mapping
+const PROG = {
+  [STEP.WELCOME]:5,[STEP.OCCASION]:15,[STEP.DIET]:25,[STEP.CUISINE]:40,
+  [STEP.SPICE]:52,[STEP.BUDGET]:64,[STEP.DRINK_YN]:74,[STEP.DRINK_TYPE]:82,
+  [STEP.DRINK_STYLE]:88,[STEP.ALLERGY]:93,[STEP.RECOMMEND]:100,
+  [STEP.POST_REC]:100,[STEP.EXPLORE]:100,[STEP.FB1]:100,[STEP.FB2]:100,[STEP.FB3]:100,
+};
+
+/*
+ ── Boot ──────────────────────────────────────────────────
+*/
+window.addEventListener('load', () => {
+  document.getElementById('inp').addEventListener('keydown', e => { if(e.key==='Enter') userSend(); });
+  if(window.speechSynthesis){ window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices(); }
+  // Read table number from QR code URL param
+  const _urlP = new URLSearchParams(window.location.search);
+  const _table = _urlP.get('table');
+  if (_table) {
+    P.tableNumber = _table;
+    const badge = document.getElementById('tblBadge');
+    if (badge) { badge.textContent = 'Table ' + _table; badge.style.display = 'inline'; }
+  }
+  setTimeout(startFlow, 500);
+});
+
+function setProgress(s){ document.getElementById('prog').style.width = (PROG[s]||0)+'%'; }
+
+/*
+ ════════════════════════════════════════════════════════
+  FLOW STEPS
+ ════════════════════════════════════════════════════════
+*/
+async function startFlow(){
+  step = STEP.WELCOME;
+  setProgress(step);
+  const welcomeText = "Hi 👋 Welcome to Suka Brew, Mallathalli!\n\nI'm SukaMate 🍽️ — your personal food and drinks guide.\n\nI'll ask you a few quick questions and recommend the best dishes and drinks just for you.\n\nReady to explore?";
+  // Render bubble and chips immediately — browser blocks autoplay so we defer speaking
+  const row = makeRow('b');
+  row.querySelector('.bbl').textContent = welcomeText;
+  renderChips(['Yes, let\'s go! 🚀', 'See Popular Picks 🌟']);
+  pendingWelcomeSpeech = welcomeText;
+}
+
+async function handle(label){
+  // Play welcome speech on first user gesture (bypasses browser autoplay restriction)
+  if(pendingWelcomeSpeech){
+    if(ttsOn && window.speechSynthesis){ speak(pendingWelcomeSpeech, null); }
+    pendingWelcomeSpeech = null;
+  }
+  clearChips();
+  userBubble(label);
+  const l = label.toLowerCase();
+
+  // ── Welcome ───────────────────────────────────────────
+  if(step===STEP.WELCOME){
+    if(l.includes('popular')){ await doPopular(); }
+    else { await doOccasion(); }
+
+  // ── Occasion ──────────────────────────────────────────
+  } else if(step===STEP.OCCASION){
+    P.occasion = l.includes('solo')?'solo':l.includes('date')?'date':l.includes('friend')?'friends':'family';
+    await doDiet();
+
+  // ── Diet ──────────────────────────────────────────────
+  } else if(step===STEP.DIET){
+    P.dietType = l.includes('veg') && !l.includes('non') ? 'veg'
+               : l.includes('non') ? 'nonveg'
+               : l.includes('sea') ? 'seafood' : 'both';
+    await doCuisine();
+
+  // ── Cuisine (multi-select handled separately) ─────────
+  } else if(step===STEP.CUISINE){
+    // handled by confirmCuisines()
+
+  // ── Spice ─────────────────────────────────────────────
+  } else if(step===STEP.SPICE){
+    P.spice = l.includes('mild')?'mild':l.includes('medium')?'medium':'spicy';
+    await doBudget();
+
+  // ── Budget ────────────────────────────────────────────
+  } else if(step===STEP.BUDGET){
+    P.budget = l.includes('300')?'300-500':l.includes('500')?'500-800':l.includes('800')?'800-1200':'1200+';
+    await doDrinkYN();
+
+  // ── Want a drink? ─────────────────────────────────────
+  } else if(step===STEP.DRINK_YN){
+    P.wantsDrink = l.includes('yes')||l.includes('sure')||l.includes('yeah');
+    if(P.wantsDrink){ await doDrinkType(); }
+    else { await doAllergy(); }
+
+  // ── Drink type ────────────────────────────────────────
+  } else if(step===STEP.DRINK_TYPE){
+    P.drinkType = l.includes('alc')||l.includes('beer')||l.includes('wine')||l.includes('cocktail') ? 'alcohol' : 'nonalcohol';
+    await doDrinkStyle();
+
+  // ── Drink style ───────────────────────────────────────
+  } else if(step===STEP.DRINK_STYLE){
+    P.drinkStyle = l.includes('beer')?'beer':l.includes('wine')?'wine':l.includes('cocktail')?'cocktail':l.includes('mocktail')?'mocktail':l.includes('juice')||l.includes('fruit')?'juice':'coffee';
+    await doAllergy();
+
+  // ── Allergy ───────────────────────────────────────────
+  } else if(step===STEP.ALLERGY){
+    const lTrim = l.trim();
+    P.allergies = (lTrim==='none'||lTrim.startsWith('none')||lTrim==='no allergies'||lTrim==='no'||lTrim==='n/a') ? null : label;
+    await doRecommend();
+
+  // ── Post-recommendation ───────────────────────────────
+  } else if(step===STEP.POST_REC){
+    if(l.includes('order')||l.includes('i\'ll order')){ await doFB1(); }
+    else if(l.includes('retry')||l.includes('regenerat')){ await doRecommend(); }
+    else if(l.includes('more')||l.includes('option')||l.includes('show more')){ await doExploreMenu(); }
+    else if(l.includes('explore')){ await doExploreMenu(); }
+    else if(l.includes('full menu')||l.includes('📋')){ await doFullMenu(); }
+    else if(l.includes('drink')){ await doExploreChoice('drinks'); }
+    else if(l.includes('feedback')){ openFb(); }
+    else { await doExploreMenu(); }
+
+  // ── Explore ───────────────────────────────────────────
+  } else if(step===STEP.EXPLORE){
+    if(l.includes('feedback')){ openFb(); }
+    else { await doExploreChoice(label); }
+
+  // ── Feedback ──────────────────────────────────────────
+  } else if(step===STEP.FB1){
+    P.liked = !l.includes('not')&&!l.startsWith('no');
+    await doFB2();
+  } else if(step===STEP.FB2){
+    P.enjoyed = l.includes('loved')||l.includes('great')||l.includes('good');
+    await doFB3();
+  } else if(step===STEP.FB3){
+    P.wouldRec = l.includes('yes')||l.includes('definitely');
+    await saveFb();
+    await botSay("Thank you so much for your feedback! 🙏\nWe're thrilled to have you at Suka Brew.\nEnjoy your meal and see you again soon! 🍽️",[]);
+    step = STEP.DONE;
+
+  // ── Done / free chat ──────────────────────────────────
+  } else {
+    if(l.includes('start over')||l.includes('restart')){
+      P={}; document.getElementById('msgs').innerHTML=''; await startFlow();
+    } else if(l.includes('feedback')){ openFb(); }
+    else if(l.includes('menu')){ await doFullMenu(); }
+    else { await freeChat(label); }
+  }
+}
+
+/*
+ ── Step implementations ──────────────────────────────────
+*/
+async function doOccasion(){
+  step=STEP.OCCASION; setProgress(step);
+  await botSay("Perfect! Just a quick one — who are you dining with today?",
+    ['🧍 Solo dining','💑 Date night','👫 With friends','👨‍👩‍👧 Family outing']);
+}
+
+async function doDiet(){
+  step=STEP.DIET; setProgress(step);
+  await botSay("Great! What's your food preference?",
+    ['🥦 Vegetarian','🍗 Non-Vegetarian','🦐 Seafood lover','🤝 I eat everything']);
+}
+
+async function doCuisine(){
+  step=STEP.CUISINE; setProgress(step);
+  // Multi-select UI
+  await botSayMulti(
+    "Which cuisines are you in the mood for today?\n\nYou can pick more than one!",
+    ['🇮🇳 Indian','🥢 Asian','🍝 Italian / Continental','🔥 BBQ & Grill','🌮 Fusion'],
+    confirmCuisines
+  );
+}
+
+async function doSpice(){
+  step=STEP.SPICE; setProgress(step);
+  await botSay("How spicy do you like it?",
+    ['🌿 Mild — keep it gentle','🌶️ Medium — some heat is good','🔥 Spicy — bring it on!']);
+}
+
+async function doBudget(){
+  step=STEP.BUDGET; setProgress(step);
+  await botSay("What's your approximate budget per person?",
+    ['₹300–₹500 (light snacks)','₹500–₹800 (starter + main)','₹800–₹1200 (full meal)','Above ₹1200 (premium experience)']);
+}
+
+async function doDrinkYN(){
+  step=STEP.DRINK_YN; setProgress(step);
+  await botSay("Would you like a drink recommendation to go with your meal?",
+    ['Yes, suggest a drink! 🍹','No thanks, just food 🍽️']);
+}
+
+async function doDrinkType(){
+  step=STEP.DRINK_TYPE; setProgress(step);
+  await botSay("Would you prefer an alcoholic or non-alcoholic drink?",
+    ['🍺 Alcoholic (Beer / Wine / Cocktail)','🍸 Non-alcoholic (Mocktail / Juice / Coffee)']);
+}
+
+async function doDrinkStyle(){
+  step=STEP.DRINK_STYLE; setProgress(step);
+  if(P.drinkType==='alcohol'){
+    await botSay("What kind of drink are you in the mood for?",
+      ['🍺 Beer','🍷 Wine','🍹 Cocktail']);
+  } else {
+    await botSay("What kind of non-alcoholic drink?",
+      ['🍸 Mocktail','🍹 Juice','☕ Coffee / Tea']);
+  }
+}
+
+async function doAllergy(){
+  step=STEP.ALLERGY; setProgress(step);
+  await botSay("Almost there! Any allergies or ingredients to avoid?\n(e.g. nuts, dairy, gluten — or say 'None')",
+    ['None','Nuts','Dairy','Gluten','Shell fish']);
+}
+
+async function doRecommend(){
+  step=STEP.RECOMMEND; setProgress(step);
+  const t = addTyping();
+
+  const cuisineStr = P.cuisines.length>0 ? P.cuisines.join(' and ') : 'any';
+  const drinkStr = P.wantsDrink
+    ? `Customer wants a ${P.drinkStyle||P.drinkType||'any'} drink.`
+    : 'Customer does not want a drink recommendation.';
+  const allergyStr = P.allergies ? `Avoid: ${P.allergies}.` : 'No known allergies.';
+
+  const prompt = `Generate a personalised Suka Brew recommendation.
+
+Customer profile:
+- Occasion: ${P.occasion||'general dining'}
+- Diet: ${P.dietType||'any'}
+- Cuisines preferred: ${cuisineStr}
+- Spice level: ${P.spice||'medium'}
+- Budget per person: ₹${P.budget||'500-800'}
+- Drink: ${drinkStr}
+- Allergies: ${allergyStr}
+
+RULES — follow exactly:
+1. Always recommend in this FIXED ORDER: first a Starter, second a Main Course, third a Dessert
+2. MAIN COURSE must be one of: pizza, biryani, pasta, curry, steak, burger, grilled fish — never a soup or starter
+3. Never recommend 3 starters. Never skip the Main Course
+4. If drink requested, add as 4th item after dessert
+5. Match diet: veg = no meat/seafood; nonveg = can include meat; seafood = prefer seafood items
+6. Only use dishes from the Suka Brew menu. Always show ₹ prices
+
+Format EXACTLY like this:
+Here are your top picks at Suka Brew 🍽️
+
+🥗 Starter: [Dish Name] — ₹[price]
+[One sentence why it suits their taste]
+
+🍕 Main Course: [Dish Name] — ₹[price]
+[One sentence why it suits their taste]
+
+🍰 Dessert: [Dish Name] — ₹[price]
+[One sentence why it suits their taste]
+
+${P.wantsDrink ? '🍹 Drink: [Drink Name] — ₹[price]\n[One sentence why it pairs well]' : ''}
+
+[One warm closing line]`;
+
+  try {
+    const res = await fetch(`${API}/api/chat`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sessionId:SID, message:prompt, preferences:{tableNumber:P.tableNumber||null}})
+    });
+    const d = await res.json();
+    t.remove();
+    if(!res.ok || !d.reply){
+      step=STEP.POST_REC;
+      await botSay("Hmm, I had a little trouble generating your recommendation. Let's try again!",
+        ['🔄 Retry recommendation','🍽️ Explore Menu']);
+      return;
+    }
+    step=STEP.POST_REC;
+    await botSay(d.reply,
+      ["✅ I'll order this!","🔄 Show more options","🍹 Change my drink","📋 Full Menu"]);
+  } catch(e){
+    t.remove();
+    step=STEP.POST_REC;
+    await botSay("Connection issue — couldn't load your recommendation. Please try again!",
+      ['🔄 Retry recommendation','🍽️ Explore Menu']);
+  }
+}
+
+async function doPopular(){
+  step=STEP.POST_REC;
+  await botSay(
+    "Here are Suka Brew's most popular picks right now 🌟\n\nShetty's Prawns Ghee Roast — ₹489\nOur signature coastal Mangalorean prawn dish, loved by everyone\n\nFiery BBQ Chicken Pizza — ₹489\nCrispy thin-crust pizza with smoky BBQ chicken\n\nNew York Cheesecake — ₹349\nCreamy classic baked cheesecake, the perfect finish\n\nClassic Mojito — ₹350\nRefreshing mint-lime cocktail, pairs with everything",
+    ["✅ I'll order from these!","🍽️ Get personalised picks","📋 Full Menu"]
+  );
+}
+
+async function doExploreMenu(){
+  step=STEP.EXPLORE;
+  await botSay("Sure! What category would you like to explore?",
+    ['🥗 Starters & Bar Bites','🍕 Pizzas & Burgers','🍛 Curries & Biryanis','🥩 BBQ & Grill','🍝 Pasta','🦐 Seafood','🍰 Desserts','🍹 Drinks']);
+}
+
+async function doExploreChoice(label){
+  const l = label.toLowerCase();
+  step = STEP.EXPLORE;
+
+  if(l.includes('starter')||l.includes('bar bites')||l.includes('snack')){
+    await botSay(
+      "Starters & Bar Bites at Suka Brew 🥗\n\nVEG:\nCheesy Nachos — ₹329\nGarlic Butter Mushrooms — ₹399\nMalai Magic Broccoli — ₹359\nClassic Chilli Mushrooms — ₹319\nPodi Corn Masala — ₹199\n\nNON-VEG:\nEgg Manchurian — ₹229\nKundapura Chicken 65 — ₹249\nKori Kempu Bezule — ₹249",
+      ['✅ Order one','🔙 Other categories']
+    );
+  } else if(l.includes('pizza')||l.includes('burger')){
+    await botSay(
+      "Pizzas & Burgers 🍕\n\nPIZZAS:\nFiery BBQ Chicken Pizza — ₹489\nChicken Tikka Pizza — ₹489\n\nBURGERS:\nChicken Topkapi Burger — ₹369\nClassic Veg Burger — ₹339",
+      ['✅ Order one','🔙 Other categories']
+    );
+  } else if(l.includes('curry')||l.includes('biryani')){
+    await botSay(
+      "Curries & Biryanis 🍛\n\nINDIAN CURRY:\nDal Makhani — ₹299\nPaneer Butter Masala — ₹349\nButter Chicken — ₹399\nMutton Rogan Josh — ₹449\n\nBIRYANIS:\nVeg Dum Biryani — ₹349\nChicken Biryani — ₹399\nMutton Biryani — ₹449\nPrawn Biryani — ₹479\n\nASIAN:\nThai Green Curry (Veg) — ₹349\nThai Red Curry (Chicken) — ₹399\nKorean Fried Chicken Bowl — ₹429",
+      ['✅ Order one','🔙 Other categories']
+    );
+  } else if(l.includes('bbq')||l.includes('grill')){
+    await botSay(
+      "BBQ & Grill 🥩\n\nBBQ Chicken Wings — ₹399\nGrilled Chicken Steak — ₹499\nLamb Kofta Kebab Platter — ₹529\nGrilled Salmon — ₹599\nGrilled Shrimp Skewers — ₹549",
+      ['✅ Order one','🔙 Other categories']
+    );
+  } else if(l.includes('pasta')){
+    await botSay(
+      "Pasta 🍝\n\nChicken Alfredo Pasta — ₹420\nSpaghetti Bolognese — ₹450\nCreamy Mushroom Pasta — ₹380 (Veg)\nLemon Spaghetti — ₹360 (Veg)",
+      ['✅ Order one','🔙 Other categories']
+    );
+  } else if(l.includes('seafood')){
+    await botSay(
+      "Seafood at Suka Brew 🦐\n\nSTARTERS:\nShetty's Prawns Ghee Roast — ₹489\nHebri Prawn Pepper Dry — ₹449\nGolden Fish Fingers — ₹449\n\nMAINS:\nGrilled Salmon — ₹599\nGrilled Shrimp Skewers — ₹549\nPrawn Biryani — ₹479",
+      ['✅ Order one','🔙 Other categories']
+    );
+  } else if(l.includes('dessert')){
+    await botSay(
+      "Desserts 🍰\n\nNew York Cheesecake — ₹349\nMatcha Panna Cotta — ₹249\nGulab Jamun Cheesecake — ₹349\nRaspberry Rasmalai Tart — ₹359\nBiscoff Tres Leches — ₹359\nMilk Mawa Samosa — ₹329\nChocolate Lava Cake — ₹299",
+      ['✅ Order one','🔙 Other categories']
+    );
+  } else if(l.includes('drink')){
+    step=STEP.EXPLORE;
+    await botSay("What type of drink? 🍹",
+      ['🍺 Beer (₹299)','🍷 Wine (from ₹349)','🍹 Cocktail (from ₹350)','🍸 Mocktail (from ₹179)']);
+  } else if(l.includes('beer')){
+    await botSay(
+      "Beers at Suka Brew 🍺 — All ₹299\n\nBelgian Wit\nLight, citrusy wheat beer. Best with nachos and starters\n\nIPA\nBold hoppy bite. Great with spicy wings\n\nStout\nDark roasted coffee + chocolate notes. Perfect with BBQ",
+      ['Order Belgian Wit','Order IPA','Order Stout','🔙 Other drinks']
+    );
+  } else if(l.includes('wine')){
+    await botSay(
+      "Wines at Suka Brew 🍷\n\nRed Wine — ₹399\nRich and bold, pairs well with grills and curries\n\nWhite Wine — ₹349\nLight and smooth, pairs with seafood and pasta\n\nRosé — ₹349\nFruity and refreshing for any occasion",
+      ['Order Red Wine','Order White Wine','Order Rosé','🔙 Other drinks']
+    );
+  } else if(l.includes('cocktail')){
+    await botSay(
+      "Cocktails 🍹\n\nClassic Mojito — ₹350\nFresh mint and lime, light and refreshing\n\nLIIT (Long Island Iced Tea) — ₹450\nStrong mix of spirits, bold flavour\n\nMargarita — ₹380\nTangy lime with tequila\n\nClover Club — ₹420\nFruity and elegant\n\nBlue Lagoon — ₹380\nTropical and colourful\n\nEspresso Martini — ₹450\nCoffee + vodka, perfect after dinner",
+      ['Order Mojito','Order LIIT','Order Margarita','🔙 Other drinks']
+    );
+  } else if(l.includes('mocktail')||l.includes('juice')||l.includes('coffee')){
+    await botSay(
+      "Non-Alcoholic Drinks 🍸\n\nVirgin Mojito — ₹199\nMocktail: Fruit Punch — ₹179\nWatermelon Cooler — ₹189\nPineapple Ginger Juice — ₹199\nFrozen Iced Tea Slush — ₹219\nClassic Cold Coffee — ₹179\nChilled Green Tea — ₹149",
+      ['Order Virgin Mojito','Order Fruit Punch','Order Cold Coffee','🔙 Other drinks']
+    );
+  } else if(l.includes('order')||l.startsWith('✅')){
+    await botSay(
+      "Great choice! 🎉\nYour server will take the order at your table.\n\nWould you like anything else?",
+      ['🍽️ More food options','🍹 More drink options','⭐ Leave feedback','🏠 Start over']
+    );
+  } else if(l.includes('feedback')){
+    openFb();
+  } else if(l.includes('other categor')||l.includes('🔙')){
+    await doExploreMenu();
+  } else if(l.includes('other drink')){
+    await doExploreChoice('drinks');
+  } else if(l.includes('menu')){
+    await doFullMenu();
+  } else if(l.includes('start over')){
+    P={}; document.getElementById('msgs').innerHTML=''; await startFlow();
+  } else {
+    await doExploreMenu();
+  }
+}
+
+async function doFullMenu(){
+  await botSay("You can explore our full menu here 👇\n\nhttps://sukabrew.lovable.app/menu\n\nFor reservations: +91-8639922127",
+    ['🏠 Start over','⭐ Leave feedback']);
+  step=STEP.DONE;
+}
+
+async function doFB1(){ step=STEP.FB1; await botSay("Do you like these suggestions?",['👍 Yes, loved them!','👎 Not really']); }
+async function doFB2(){ step=STEP.FB2; await botSay("Did you enjoy my recommendation?",['❤️ Loved it!','👍 It was good','👎 Not great']); }
+async function doFB3(){ step=STEP.FB3; await botSay("Would you recommend Suka Brew to friends and family?",['✅ Absolutely yes!','🤔 Maybe','❌ Probably not']); }
+
+async function saveFb(){
+  try {
+    await fetch(`${API}/api/feedback`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        sessionId:SID, likedSuggestions:P.liked, enjoyedRecommendation:P.enjoyed,
+        wouldRecommend:P.wouldRec, comments:'',
+        preferences:{diet:P.dietType, cuisines:P.cuisines, spice:P.spice, budget:P.budget,
+                     drinkStyle:P.drinkStyle, occasion:P.occasion}
+      })
+    });
+  } catch(e){}
+}
+
+async function freeChat(text){
+  const t=addTyping();
+  try {
+    const res=await fetch(`${API}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:SID,message:text})});
+    const d=await res.json(); t.remove();
+    await botSay(d.reply||'How can I help?',['🏠 Start over','📋 View Menu','⭐ Feedback']);
+  } catch(e){ t.remove(); await botSay('Connection error.',[]);}
+}
+
+/*
+ ════════════════════════════════════════════════════════
+  MULTI-SELECT CUISINE UI
+ ════════════════════════════════════════════════════════
+*/
+const CUISINE_MAP = {
+  '🇮🇳 Indian':'indian','🥢 Asian':'asian','🍝 Italian / Continental':'italian',
+  '🔥 BBQ & Grill':'bbq','🌮 Fusion':'fusion'
+};
+let pickedCuisines = [];
+
+function botSayMulti(text, options, onConfirm){
+  return new Promise(resolve => {
+    clearChips();
+    pickedCuisines = [];
+    const row = makeRow('b');
+    row.querySelector('.bbl').textContent = text;
+    // Show multi-select chips immediately, speak in background
+    renderMultiChips(options, onConfirm);
+    resolve();
+    if(ttsOn && window.speechSynthesis){
+      setTimeout(()=>speak(text, null), 60);
+    }
+  });
+}
+
+function renderMultiChips(options, onConfirm){
+  clearChips();
+  const msgs = document.getElementById('msgs');
+  const wrap = document.createElement('div'); wrap.className='chips'; wrap.id='multiChips';
+
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className='chip multi'; btn.textContent=opt;
+    btn.onclick=()=>{
+      const v=CUISINE_MAP[opt]||opt;
+      if(btn.classList.contains('picked')){ btn.classList.remove('picked'); pickedCuisines=pickedCuisines.filter(x=>x!==v); }
+      else { btn.classList.add('picked'); pickedCuisines.push(v); }
+    };
+    wrap.appendChild(btn);
+  });
+
+  const conf = document.createElement('button');
+  conf.className='confirm-btn'; conf.textContent='✓ Continue';
+  conf.onclick = ()=>{ wrap.remove(); onConfirm(); };
+  wrap.appendChild(conf);
+  msgs.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+async function confirmCuisines(){
+  P.cuisines = pickedCuisines.length>0 ? pickedCuisines : ['any'];
+  const display = pickedCuisines.length>0 ? pickedCuisines.join(', ') : 'anything';
+  userBubble('Cuisines: ' + display);
+  await doSpice();
+}
+
+/*
+ ════════════════════════════════════════════════════════
+  DOM HELPERS
+ ════════════════════════════════════════════════════════
+*/
+function makeRow(role){
+  const msgs=document.getElementById('msgs');
+  const row=document.createElement('div'); row.className=`row ${role}`;
+  if(role==='b'){ const ic=document.createElement('div'); ic.className='bic'; ic.textContent='🍽️'; row.appendChild(ic); }
+  const b=document.createElement('div'); b.className='bbl'; row.appendChild(b);
+  msgs.appendChild(row); msgs.scrollTop=msgs.scrollHeight;
+  return row;
+}
+
+function addTyping(){
+  const row=makeRow('b'); row.classList.add('typ');
+  row.querySelector('.bbl').innerHTML='<div class="td"></div><div class="td"></div><div class="td"></div>';
+  return row;
+}
+
+function userBubble(text){ makeRow('u').querySelector('.bbl').textContent=text; }
+
+function clearChips(){ document.querySelectorAll('.chips').forEach(e=>e.remove()); }
+
+function renderChips(choices){
+  clearChips();
+  const msgs=document.getElementById('msgs');
+  const wrap=document.createElement('div'); wrap.className='chips';
+  choices.forEach(c=>{
+    const btn=document.createElement('button'); btn.className='chip'; btn.textContent=c;
+    btn.onclick=()=>handle(c);
+    wrap.appendChild(btn);
+  });
+  msgs.appendChild(wrap); msgs.scrollTop=msgs.scrollHeight;
+}
+
+// botSay: show bubble + chips immediately, speak in background (non-blocking)
+function botSay(text, choices=[]){
+  return new Promise(resolve=>{
+    const row=makeRow('b');
+    row.querySelector('.bbl').textContent=text;
+    // Show chips right away — don't wait for TTS to finish
+    if(choices.length>0) renderChips(choices);
+    resolve();
+    // Speak in background after a tiny delay so chips render first
+    if(ttsOn && window.speechSynthesis){
+      setTimeout(()=>speak(text, null), 60);
+    }
+  });
+}
+
+/*
+ ════════════════════════════════════════════════════════
+  USER INPUT
+ ════════════════════════════════════════════════════════
+*/
+async function userSend(){
+  const inp=document.getElementById('inp');
+  const txt=inp.value.trim(); if(!txt) return;
+  inp.value=''; await handle(txt);
+}
+
+/*
+ ════════════════════════════════════════════════════════
+  TTS — FREE Web Speech API
+ ════════════════════════════════════════════════════════
+*/
+let stTimer=null;
+function speak(text, onDone){
+  if(stTimer){clearTimeout(stTimer);stTimer=null;}
+  window.speechSynthesis.cancel();
+
+  const clean=text
+    .replace(/https?:\/\/\S+/g,'link shown on screen')
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu,'')
+    .replace(/[🍽️🍤🍕🍰🍹🥗🌟⭐🥢👋🍛🥩🦐🥤☕🤔❌✅🎉🔙]/g,'')
+    .replace(/[₹]/g,'rupees ')
+    .replace(/\n{3,}/g,'\n\n').trim();
+
+  if(!clean){ if(onDone) onDone(); return; }
+
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.lang    = 'en-US';
+  utt.rate    = 0.88;   // slightly slower — warm, unhurried
+  utt.pitch   = 1.3;    // higher pitch — sweet, friendly tone
+  utt.volume  = 1.0;
+
+  // Pick the sweetest-sounding female voice available
+  const voices = window.speechSynthesis.getVoices();
+  const pref = [
+    'Samantha',               // macOS / iOS — very warm
+    'Google UK English Female',
+    'Karen',                  // macOS Australian — soft
+    'Moira',                  // macOS Irish — gentle
+    'Tessa',                  // macOS South African — bright
+    'Victoria',
+    'Google US English',
+    'Zira',                   // Windows — friendly female
+  ];
+  const picked =
+    voices.find(v => v.lang.startsWith('en') && pref.some(p => v.name.includes(p))) ||
+    voices.find(v => v.lang === 'en-US') ||
+    voices.find(v => v.lang.startsWith('en')) ||
+    voices[0];
+  if(picked) utt.voice = picked;
+
+  let finished = false;
+  const fin = () => {
+    if(!finished){
+      finished = true;
+      if(stTimer){ clearTimeout(stTimer); stTimer = null; }
+      clearInterval(nudge);
+      if(onDone) onDone();
+    }
+  };
+
+  utt.onend   = fin;
+  utt.onerror = fin;
+
+  // Fallback: if speech never fires end/error (browser bug), unblock after timeout
+  stTimer = setTimeout(fin, Math.max(4000, clean.length * 60));
+
+  // Chrome pause bug fix — nudge every 5 s to resume if paused
+  const nudge = setInterval(() => {
+    if(finished){ clearInterval(nudge); return; }
+    if(window.speechSynthesis.paused) window.speechSynthesis.resume();
+  }, 5000);
+
+  window.speechSynthesis.speak(utt);
+}
+
+function toggleTTS(){
+  ttsOn=!ttsOn;
+  document.getElementById('ttsBtn').textContent=ttsOn?'🔊':'🔇';
+  if(!ttsOn)window.speechSynthesis.cancel();
+}
+
+/*
+ ════════════════════════════════════════════════════════
+  MIC INPUT
+ ════════════════════════════════════════════════════════
+*/
+function toggleMic(){
+  if(recog){stopMic();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Voice input needs Chrome or Edge.');return;}
+  window.speechSynthesis.cancel();
+  recog=new SR(); recog.lang='en-US'; recog.interimResults=true; recog.continuous=false;
+  document.getElementById('vov').classList.add('show');
+  document.getElementById('micBtn').classList.add('on');
+  recog.onresult=e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+    document.getElementById('vlive').textContent=t;
+    if(e.results[e.results.length-1].isFinal){ const f=t.trim(); stopMic(); if(f) handle(f); }
+  };
+  recog.onerror=()=>stopMic(); recog.onend=()=>stopMic(); recog.start();
+}
+function stopMic(){
+  document.getElementById('vov').classList.remove('show');
+  document.getElementById('micBtn').classList.remove('on');
+  document.getElementById('vlive').textContent='';
+  if(recog){try{recog.stop();}catch(e){}recog=null;}
+}
+
+/*
+ ════════════════════════════════════════════════════════
+  FEEDBACK
+ ════════════════════════════════════════════════════════
+*/
+function openFb(){document.getElementById('fbm').classList.add('show');}
+function pfb(btn){
+  const q=btn.dataset.q,v=btn.dataset.v; fb[q]=v;
+  document.querySelectorAll(`[data-q="${q}"]`).forEach(b=>b.classList.remove('sel')); btn.classList.add('sel');
+}
+async function subFb(){
+  try{
+    await fetch(`${API}/api/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sessionId:SID,likedSuggestions:fb.liked==='yes',
+        enjoyedRecommendation:fb.enjoyed==='yes',wouldRecommend:fb.rec==='yes',
+        comments:document.getElementById('fbc').value})});
+  }catch(e){}
+  document.getElementById('fbm').classList.remove('show');
+  await botSay('Thank you for your feedback! 🙏 See you at Suka Brew again!',[]);
+}
+
+/*
+ ════════════════════════════════════════════════════════
+  QR CODE
+ ════════════════════════════════════════════════════════
+*/
+async function showQR(){
+  try{
+    const res=await fetch(`${API}/api/qr?url=${encodeURIComponent(location.href)}`);
+    const d=await res.json(); if(!d.qr)return;
+    const w=window.open('','_blank','width=460,height=540');
+    w.document.write(`<html><head><title>Suka Brew QR</title></head>
+      <body style="background:#0f1117;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#fff">
+      <h2 style="margin-bottom:14px">📱 Scan to Order with SukaMate</h2>
+      <img src="${d.qr}" style="width:260px;border-radius:10px;background:#fff;padding:10px">
+      <p style="margin-top:12px;color:#888;font-size:13px">Suka Brew · Mallathalli, Bengaluru</p>
+      <button onclick="window.print()" style="margin-top:12px;background:#397DFF;color:#fff;border:none;border-radius:8px;padding:9px 20px;cursor:pointer">🖨️ Print</button>
+      </body></html>`);
+  }catch(e){alert('QR requires the server to be running.');}
+}
+</script>
+</body>
+</html>

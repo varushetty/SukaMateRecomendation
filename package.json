@@ -1,0 +1,26 @@
+{
+  "name": "sukabrew-ai-chatbot",
+  "version": "1.0.0",
+  "description": "Suka Brew AI Restaurant Chatbot with Voice Assistant",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "kill-port": "lsof -ti:3000 | xargs kill -9 2>/dev/null || true"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "qrcode": "^1.5.4",
+    "uuid": "^9.0.0",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
