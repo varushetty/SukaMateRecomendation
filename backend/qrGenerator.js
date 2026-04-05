@@ -8,13 +8,13 @@ const fs = require("fs");
 
 async function generateQRCode(url) {
   const dataURL = await QRCode.toDataURL(url, {
-    width: 400,
-    margin: 2,
+    width: 600,
+    margin: 1,
     color: {
-      dark: "#1a1a2e",  // Dark navy
+      dark: "#000000",  // Pure black — required for reliable phone scanning
       light: "#ffffff",
     },
-    errorCorrectionLevel: "H",
+    errorCorrectionLevel: "M", // M = smaller QR (less dense), easier to scan than H
   });
   return dataURL;
 }
@@ -26,10 +26,10 @@ async function saveQRCodePNG(url, filename = "suka-brew-qr.png") {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
   await QRCode.toFile(outputPath, url, {
-    width: 800,
-    margin: 2,
-    color: { dark: "#1a1a2e", light: "#ffffff" },
-    errorCorrectionLevel: "H",
+    width: 1000,
+    margin: 1,
+    color: { dark: "#000000", light: "#ffffff" },
+    errorCorrectionLevel: "M",
   });
 
   console.log(`📱 QR Code saved: ${outputPath}`);
